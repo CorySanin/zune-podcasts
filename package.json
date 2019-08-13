@@ -1,0 +1,15 @@
+{
+  "name": "patreon-to-zune",
+  "version": "1.0.0",
+  "description": "converts Patreon podcast feeds for the Zune desktop software",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --use_strict index.js"
+  },
+  "author": "Cory Sanin",
+  "license": "ISC",
+  "dependencies": {
+    "express": "4.17.1",
+    "request": "2.88.0"
+  }
+}

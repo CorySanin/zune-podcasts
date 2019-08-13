@@ -1,0 +1,26 @@
+body{
+    font-family:sans-serif;
+    line-height:1.4em;
+}
+#container{
+    max-width: 800px;
+    margin:auto;
+    position:absolute;
+    left:0;
+    right:0;
+    top:25%;
+    box-sizing:border-box;
+}
+#container *{
+    width:100%;
+    box-sizing:inherit;
+}
+#outputfields{
+    margin-top:1em;
+}
+#urlinput{
+    width:calc(100% - 40px);
+}
+#submitbtn{
+    width:35px;
+}
