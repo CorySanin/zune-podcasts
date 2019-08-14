@@ -1,13 +1,17 @@
 const URL = window.location.href;
+const URLPREFIX = URL + 'out.xml?in=';
+const ZUNESUB = 'zune://subscribe/?patreontozune=';
 
 var computeurl;
 window.onload = function() {
     var urlinput = document.getElementById('urlinput');
     var outlabel = document.getElementById('outlabel');
     var urloutput = document.getElementById('urloutput');
+    var zunesubscribe = document.getElementById('zunesubscribe');
 
     var update = function(){
-        urloutput.value = URL + 'out.xml?in=' + encodeURIComponent(urlinput.value);
+        urloutput.value = URLPREFIX + encodeURIComponent(urlinput.value);
+        zunesubscribe.href = ZUNESUB + URLPREFIX + urlinput.value;
     }
 
     var copyurl = function(){

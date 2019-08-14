@@ -3,20 +3,24 @@
     <head>
         <meta charset="UTF-8">
         <title>Patreon to Zune | Import Patreon Podcasts to the Zune Software</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" type="image/png" href="/assets/favicon.png" sizes="32x32">
         <link rel="stylesheet" href="/styles/reset.css">
         <link rel="stylesheet" href="/styles/styles.css">
         <script src="/scripts/compute.js"></script>
     </head>
     <body>
+        <div id="brandtag"></div>
         <div id="container">
             <form action="/out.xml" method="GET" id="feedform" onsubmit="return computeurl()">
-                <label for="urlinput">Feed URL:</label>
+                <label for="urlinput">FEED URL:</label>
                 <input name="in" type="text" id="urlinput"/>
-                <input type="submit" value="→" id="submitbtn"/>
+                <input type="submit" value="→" id="submitbtn" class="button floatright"/>
             </form>
             <div id="outputfields" style="display:none">
-                <label for="urloutput" title="give this to the Zune Software" id="outlabel">Proxied URL:</label>
-                <input type="text" readonly id="urloutput"/>
+                <label for="urloutput" title="give this to the Zune Software" id="outlabel">PROXIED URL:</label>
+                <input type="text" readonly id="urloutput"/><br/><br/>
+                <a class="button floatright" href="" id="zunesubscribe">SUBSCRIBE WITH ZUNE</a>
             </div>
         </div>
     </body>
