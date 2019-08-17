@@ -11,6 +11,7 @@
     </head>
     <body>
         <div id="brandtag"></div>
+        <div id="nav"><a class="current" href="/">patreon to zune</a> <a href="https://github.com/CorySanin/patreon-to-zune">fork on github</a> <a href="https://github.com/CorySanin/patreon-to-zune/issues/new">report issue</a></div>
         <div id="container">
             <form action="/out.xml" method="GET" id="feedform" onsubmit="return computeurl()">
                 <label for="urlinput">FEED URL:</label>
@@ -20,7 +21,9 @@
             <div id="outputfields" style="display:none">
                 <label for="urloutput" title="give this to the Zune Software" id="outlabel">PROXIED URL:</label>
                 <input type="text" readonly id="urloutput"/><br/><br/>
-                <a class="button floatright" href="" id="zunesubscribe">SUBSCRIBE WITH ZUNE</a>
+                <div class="alignright">
+                    <a class="button" href="" id="zunesubscribe">SUBSCRIBE WITH ZUNE</a>
+                </div>
             </div>
         </div>
     </body>

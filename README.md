@@ -1,4 +1,7 @@
 # patreon-to-zune
+![Docker Pulls](https://img.shields.io/docker/pulls/corysanin/patreon-to-zune) ![David](https://img.shields.io/david/CorySanin/patreon-to-zune) ![GitHub repo size](https://img.shields.io/github/repo-size/CorySanin/patreon-to-zune) ![GitHub](https://img.shields.io/github/license/CorySanin/patreon-to-zune)
+
+
 Proxy that allows importing Patreon podcasts into the Zune desktop software. Probably has at least one other legitimate use. idk.
 
 A live, usable demo can be found [here](https://patreontozune.net/).

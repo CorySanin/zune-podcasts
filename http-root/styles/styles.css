@@ -22,7 +22,7 @@ input[type=text]:focus{
     border-color:#fa6ec9;
 }
 #container{
-    width: 800px;
+    width:800px;
     max-width:90%;
     margin:auto;
     position:absolute;
@@ -60,6 +60,25 @@ input[type=text]:focus{
     width:15px;
     background:linear-gradient(to bottom, rgba(241,13,161,1) 0%, rgba(233,80,20,1) 100%);
 }
+#nav{
+    position:fixed;
+    top:52px;
+    left:38px;
+}
+#nav a{
+    color:#bfbfbf;
+    text-decoration:none;
+    padding-right:1em;
+}
+#nav a.current{
+    color:#3c3c3c;
+}
+#nav a:hover{
+    color:#828689;
+}
+.alignright{
+    text-align:right;
+}
 .floatright{
     float:right;
 }
@@ -71,11 +90,12 @@ input[type=text]:focus{
     border:1px solid #c4c4c4;
     border-radius:5px;
     padding:.2em;
+    cursor:pointer;
 }
 .button:active{
     background:linear-gradient(to bottom, rgba(248,248,248,1) 0%, rgba(228,228,228,1) 100%);
 }
 ::selection {
-    background: #f10da2;
+    background:#f10da2;
     color:#fff
 }
