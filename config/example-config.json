@@ -1,0 +1,9 @@
+{
+    "port": 8080,
+    "blacklist": true,
+    "domainlist": [
+        "tauntbot.tk",
+        "musickitten.net",
+        "sanin.dev"
+    ]
+}
