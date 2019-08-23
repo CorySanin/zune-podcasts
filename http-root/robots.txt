@@ -1,4 +1,2 @@
 User-agent: *
-Disallow: /out.xml
-Disallow: /out.xml?*
-Disallow: /*?*in=
+Disallow: /feed/

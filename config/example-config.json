@@ -5,5 +5,8 @@
         "tauntbot.tk",
         "musickitten.net",
         "sanin.dev"
-    ]
+    ],
+    "logrequestnum": false,
+    "logrequestdomains": false,
+    "logdir": "./"
 }

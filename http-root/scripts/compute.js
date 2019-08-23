@@ -1,6 +1,6 @@
 const URL = window.location.href;
-const URLPREFIX = URL + 'out.xml?in=';
-const ZUNESUB = 'zune://subscribe/?patreontozune=';
+const URLPREFIX = URL + 'feed/out.xml?in=';
+const ZUNESUB = 'zune://subscribe/?patreon-to-zune=';
 
 var computeurl;
 window.onload = function() {

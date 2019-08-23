@@ -1,13 +1,17 @@
 const Express = require('express');
 const request = require('request');
 const fs = require('fs');
+const path = require('path');
 const useragent = 'p2z';
 const cfgfile = './config/config.json';
 
 let config = {
     port: 8080,
     blacklist: true,
-    domainlist: []
+    domainlist: [],
+    logrequestnum: false,
+    logrequestdomains: false,
+    logdir: './'
 }
 
 /**
@@ -23,11 +27,65 @@ function notBlacklisted(domain){
     return config.blacklist;
 }
 
+/**
+ * Increment the number of requests in the appropriate log
+ */
+function bumpLogCount(){
+    if(config.logrequestnum){
+        let today = new Date();
+        logPath = path.join(config.logdir, 'p2z_' + today.getFullYear() + '.json');
+        let data = {};
+        try{
+            data = JSON.parse(fs.readFileSync(logPath, {encoding: 'utf8'}));
+        }
+        catch(ex){
+            console.log(ex);
+        }
+        let month = today.getMonth() + 1;
+        if(!(month in data)){
+            data[month] = {};
+        }
+        data[month].requests = ('requests' in data[month])? data[month].requests + 1 : 1;
+        fs.writeFileSync(logPath, JSON.stringify(data), {encoding: 'utf8'});
+    }
+}
+
+/**
+ * Add a new domain to the log of domains being proxied to
+ * @param {string} domain 
+ */
+function logDomain(domain){
+    if(config.logrequestdomains){
+        let today = new Date();
+        logPath = path.join(config.logdir, 'p2z_' + today.getFullYear() + '.json');
+        let data = {};
+        try{
+            data = JSON.parse(fs.readFileSync(logPath, {encoding: 'utf8'}));
+        }
+        catch(ex){
+            console.log(ex);
+        }
+        let month = today.getMonth() + 1;
+        if(!(month in data)){
+            data[month] = {};
+        }
+        let domains = []
+        if('domains' in data[month]){
+            domains = data[month].domains;
+        }
+        if(domains.indexOf(domain) < 0){
+            domains.push(domain);
+            data[month].domains = domains;
+            fs.writeFileSync(logPath, JSON.stringify(data), {encoding: 'utf8'});
+        }
+    }
+}
+
 let http = new Express();
 
 http.use('/', Express.static('http-root'));
 
-http.get('/out.xml', function (req, res) {
+http.get('/feed/out.xml', function (req, res) {
     let url = req.query.in;
     if(!/^[a-z]+:\/\//.test(url.toLowerCase())){
         url = 'http://' + url;
@@ -59,6 +117,12 @@ http.get('/out.xml', function (req, res) {
         res.status(500);
         res.send('bad url');
     }
+    bumpLogCount();
+    logDomain(domain);
+});
+
+http.get('/out.xml', function (req, res) {
+    res.redirect('/feed/out.xml?in=' + req.query.in);
 });
 
 
