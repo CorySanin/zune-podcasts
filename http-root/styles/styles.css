@@ -65,6 +65,9 @@ input[type=text]:focus{
     top:52px;
     left:38px;
 }
+#nav h1{
+    display: inline;
+}
 #nav a{
     color:#bfbfbf;
     text-decoration:none;
