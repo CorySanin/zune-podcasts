@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const useragent = 'p2z';
 const cfgfile = './config/config.json';
+const LEADINGAMP = new RegExp('(https?://[^\\s]+\\?)&amp;([^<"\\s]+)', 'g');
 
 let config = {
     port: 8080,
@@ -48,6 +49,15 @@ function bumpLogCount(){
         data[month].requests = ('requests' in data[month])? data[month].requests + 1 : 1;
         fs.writeFileSync(logPath, JSON.stringify(data), {encoding: 'utf8'});
     }
+}
+
+/**
+ * Remove leading ampersands from get queries
+ * (Zune doesn't like leading ampersands)
+ * @param {string} feed 
+ */
+function fixUrls(feed){
+    return feed.replace(LEADINGAMP, '$1$2');
 }
 
 /**
@@ -110,7 +120,7 @@ http.get('/feed/out.xml', function (req, res) {
             else{
                 res.setHeader('Content-Type', 'text/xml;charset=UTF-8');
             }
-            res.send(body);
+            res.send(fixUrls(body));
         });
     }
     else{
