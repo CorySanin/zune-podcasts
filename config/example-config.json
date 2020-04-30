@@ -6,6 +6,7 @@
         "musickitten.net",
         "sanin.dev"
     ],
+    "deepproxy": false,
     "logrequestnum": false,
     "logrequestdomains": false,
     "logdir": "./"
