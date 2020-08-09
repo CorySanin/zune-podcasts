@@ -69,8 +69,8 @@ function bumpLogCount() {
 function getFilename(url) {
     url = url.split('/').pop().replace(/\#(.*?)$/, '').replace(/\?(.*?)$/, '');
     url = url.split('.');
-    if (url.length >= 2 && url[1]) {
-        url[1] = `.${url[1]}`;
+    if (url.length >= 2 && url[url.length - 1]) {
+        url[1] = `.${url[url.length - 1]}`;
     }
     return { filename: (url[0] || ''), ext: (url[1] || '') }
 }
