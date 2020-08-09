@@ -172,6 +172,7 @@ http.get('/proxy/:filename', function (req, res) {
     try {
         const proxurl = atob(req.query['url']);
         if (config.deepproxy === true && notBlacklisted(proxurl)) {
+            console.log(`Proxy to ${proxurl}`);
             proxy.web(req, res, {
                 target: proxurl
             });
