@@ -3,10 +3,12 @@ const phin = require('phin');
 const httpProxy = require('http-proxy');
 const fs = require('fs');
 const path = require('path');
+const atob = require('atob');
+const btoa = require('btoa');
 const useragent = 'p2z';
 const cfgfile = './config/config.json';
 const LEADINGAMP = new RegExp('(https?://[^\\s]+\\?)&amp;([^<"\\s]+)', 'g');
-const MATCHURL = new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/, 'g');
+const MATCHURL = new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:;%_\+.~#?&//=]*)/, 'g');
 const proxy = httpProxy.createProxyServer({
     secure: false,
     changeOrigin: true,
@@ -61,6 +63,19 @@ function bumpLogCount() {
 }
 
 /**
+ * Gets the filename and extension of a URL
+ * @param {string} url
+ */
+function getFilename(url) {
+    url = url.split('/').pop().replace(/\#(.*?)$/, '').replace(/\?(.*?)$/, '');
+    url = url.split('.');
+    if (url.length >= 2 && url[1]) {
+        url[1] = `.${url[1]}`;
+    }
+    return { filename: (url[0] || ''), ext: (url[1] || '') }
+}
+
+/**
  * Remove leading ampersands from get queries
  * (Zune doesn't like leading ampersands)
  * @param {string} feed 
@@ -75,7 +90,7 @@ function fixUrls(feed) {
  */
 function proxifyUrls(feed, host) {
     return (config.deepproxy === true) ? feed.replace(MATCHURL, match => {
-        return `${host}/proxy/${encodeURIComponent(match)}`;
+        return `${host}/proxy/file${getFilename(match).ext}?url=${encodeURIComponent(btoa(match))}`;
     }) : feed;
 }
 
@@ -135,7 +150,13 @@ http.get('/feed/out.xml', async function (req, res) {
                 res.status(resp.statusCode);
             }
             res.setHeader('Content-Type', 'text/xml;charset=UTF-8');
-            let body = proxifyUrls(fixUrls(resp.body.toString()), `${req.protocol}://${req.headers.host}`);
+            let body = null;
+            try {
+                body = proxifyUrls(fixUrls(resp.body.toString()), `${req.protocol}://${req.headers.host}`);
+            }
+            catch (err) {
+                console.log(err);
+            }
             res.send(body);
         }
     }
@@ -147,14 +168,20 @@ http.get('/feed/out.xml', async function (req, res) {
     logDomain(domain);
 });
 
-http.get('/proxy/:url', function (req, res) {
-    const proxurl = req.params['url'];
-    if (config.deepproxy === true && notBlacklisted(proxurl)) {
-        proxy.web(req, res, {
-            target: proxurl
-        });
+http.get('/proxy/:filename', function (req, res) {
+    try {
+        const proxurl = atob(req.query['url']);
+        if (config.deepproxy === true && notBlacklisted(proxurl)) {
+            proxy.web(req, res, {
+                target: proxurl
+            });
+        }
+        else {
+            res.status(403);
+            res.send();
+        }
     }
-    else {
+    catch (err) {
         res.status(403);
         res.send();
     }
