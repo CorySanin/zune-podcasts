@@ -14,12 +14,12 @@ const proxy = httpProxy.createProxyServer({
 });
 
 let config = {
-    port: 8080,
-    blacklist: true,
-    domainlist: [],
-    deepproxy: false,
-    logrequestnum: false,
-    logrequestdomains: false,
+    port: process.env.PORT || 8080,
+    blacklist: (process.env.BLACKLIST || 'true').toLowerCase() === 'true',
+    domainlist: (process.env.DOMAINLIST) ? process.env.DOMAINLIST.split(',') : [],
+    deepproxy: (process.env.DEEPPROXY || 'false').toLowerCase() === 'true',
+    logrequestnum: (process.env.LOGREQUESTNUM || 'false').toLowerCase() === 'true',
+    logrequestdomains: (process.env.LOGREQUESTDOMAINS || 'false').toLowerCase() === 'true',
     logdir: './'
 }
 
@@ -173,7 +173,7 @@ fs.readFile(cfgfile, 'utf8', function (err, data) {
             }
         }
         catch (e) {
-            console.log(e);
+            console.log('config file couldn\'t be read. Using defaults and environment variables instead.');
         }
     }
     else {
