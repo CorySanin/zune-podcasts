@@ -10,7 +10,8 @@ const MATCHURL = new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[
 const proxy = httpProxy.createProxyServer({
     secure: false,
     changeOrigin: true,
-    ignorePath: true
+    ignorePath: true,
+    followRedirects: true
 });
 
 let config = {
