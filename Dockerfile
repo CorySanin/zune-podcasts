@@ -1,4 +1,4 @@
-FROM node:alpine3.11
+FROM node:alpine3.12
 
 WORKDIR /usr/src/p-to-z
 

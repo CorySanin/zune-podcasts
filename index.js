@@ -1,6 +1,7 @@
 const Express = require('express');
 const phin = require('phin');
 const httpProxy = require('http-proxy');
+const exuseragent = require('express-useragent');
 const fs = require('fs');
 const path = require('path');
 const atob = require('atob');
@@ -15,12 +16,17 @@ const proxy = httpProxy.createProxyServer({
     ignorePath: true,
     followRedirects: true
 });
+const unsupportedAgents = [
+    'Windows XP',
+    'Windows Vista'
+];
 
 let config = {
     port: process.env.PORT || 8080,
     blacklist: (process.env.BLACKLIST || 'true').toLowerCase() === 'true',
     domainlist: (process.env.DOMAINLIST) ? process.env.DOMAINLIST.split(',') : [],
     deepproxy: (process.env.DEEPPROXY || 'false').toLowerCase() === 'true',
+    deepproxyurl: process.env.DEEPPROXYURL || false,
     logrequestnum: (process.env.LOGREQUESTNUM || 'false').toLowerCase() === 'true',
     logrequestdomains: (process.env.LOGREQUESTDOMAINS || 'false').toLowerCase() === 'true',
     logdir: './'
@@ -125,9 +131,31 @@ function logDomain(domain) {
     }
 }
 
+/**
+ * Given a user agent string, return true if the OS is detected to be EOL
+ * @param {string} useragent 
+ */
+function nonsupported(useragent) {
+    for(var i = 0; i < unsupportedAgents.length; i++){
+        if(useragent.os.includes(unsupportedAgents[i])){
+            return true;
+        }
+    }
+    return false;
+}
+
 let http = new Express();
 
+http.use(exuseragent.express());
 http.use('/', Express.static('http-root'));
+http.set('view engine', 'ejs');
+
+http.get('/', function (req, res) {
+    res.render('index', {
+        config,
+        nonsupported: nonsupported(req.useragent)
+    });
+});
 
 http.get('/feed/out.xml', async function (req, res) {
     let url = req.query.in;

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Patreon to Zune | Import Patreon Podcasts to the Zune Software</title>
+    <meta name="description" content="Proxy that allows importing Patreon podcasts into the Zune desktop software" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/assets/favicon.png" sizes="32x32">
+    <link rel="stylesheet" href="/styles/reset.css">
+    <link rel="stylesheet" href="/styles/styles.css?v=2">
+    <script src="/scripts/compute.js"></script>
+</head>
+
+<body>
+    <div id="brandtag"></div>
+    <div>
+        <div id="nav">
+            <h1><a class="current" href="/">Patreon to Zune</a></h1>
+            <% if (config.deepproxyurl) { %>
+            <a href="<%= config.deepproxyurl %>">Content Proxy</a>
+            <% } %>
+            <a href="https://github.com/CorySanin/patreon-to-zune">Fork on GitHub</a>
+            <a href="https://github.com/CorySanin/patreon-to-zune/issues/new">Report Issue</a>
+        </div>
+        <% if (config.deepproxyurl && nonsupported) { %>
+        <span class="tooltip panel">
+            <div class="brandtag-horiz"></div>Looks like you're using an old OS. If you're still getting error code
+            C00D1335, try the <a href="<%= config.deepproxyurl %>">content proxy</a>.
+        </span>
+        <% } %>
+    </div>
+    <div id="container" class="panel">
+        <form action="/out.xml" method="GET" id="feedform" onsubmit="return computeurl()">
+            <label for="urlinput">Feed URL:</label>
+            <input name="in" type="text" id="urlinput" />
+            <input type="submit" value="→" id="submitbtn" class="button floatright" />
+        </form>
+        <div id="outputfields" style="display:none">
+            <label for="urloutput" title="give this to the Zune Software" id="outlabel">Proxied URL:</label>
+            <input type="text" readonly id="urloutput" /><br /><br />
+            <div class="alignright">
+                <a class="button" href="" id="zunesubscribe">Subscribe with Zune</a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -7,6 +7,7 @@
         "sanin.dev"
     ],
     "deepproxy": false,
+    "deepproxyurl": false,
     "logrequestnum": false,
     "logrequestdomains": false,
     "logdir": "./"
