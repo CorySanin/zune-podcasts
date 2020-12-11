@@ -14,10 +14,10 @@
   "repository": "https://github.com/CorySanin/patreon-to-zune",
   "dependencies": {
     "express": "4.17.1",
-    "ejs": "3.1.3",
+    "ejs": "3.1.5",
     "express-useragent": "1.0.15",
     "http-proxy": "^1.18.1",
-    "phin": "3.5.0",
+    "phin": "3.5.1",
     "btoa": "1.2.1",
     "atob": "2.1.2"
   }
