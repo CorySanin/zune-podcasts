@@ -10,6 +10,8 @@ const useragent = 'p2z';
 const cfgfile = './config/config.json';
 const LEADINGAMP = new RegExp('(https?://[^\\s]+\\?)&amp;([^<"\\s]+)', 'g');
 const MATCHURL = new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:;%_\+.~#?&//=]*)/, 'g');
+const MATCHHEX = new RegExp('^[0-9a-fA-F]{1,3}$');
+const MATCHBIN = new RegExp('^[01]{1,12}$');
 const proxy = httpProxy.createProxyServer({
     secure: false,
     changeOrigin: true,
@@ -136,8 +138,8 @@ function logDomain(domain) {
  * @param {string} useragent 
  */
 function nonsupported(useragent) {
-    for(var i = 0; i < unsupportedAgents.length; i++){
-        if(useragent.os.includes(unsupportedAgents[i])){
+    for (var i = 0; i < unsupportedAgents.length; i++) {
+        if (useragent.os.includes(unsupportedAgents[i])) {
             return true;
         }
     }
@@ -155,6 +157,30 @@ http.get('/', function (req, res) {
         config,
         nonsupported: nonsupported(req.useragent)
     });
+});
+
+http.get('/ring/:id', function (req, res) {
+    let id = -1;
+    if (MATCHHEX.test(req.params['id'])) {
+        id = parseInt(req.params['id'], 16);
+    }
+    else if (MATCHBIN.test(req.params['id'])) {
+        id = parseInt(req.params['id'], 2);
+    }
+    if(id >= 0){
+        let rings = [];
+        for(let i = 0; i < 12; i++){
+            rings.push((id >> i) & 1);
+        }
+        res.set('Content-Type', 'image/svg+xml');
+        res.render('dev-ring', {
+            rings
+        });
+    }
+    else{
+        res.status(403);
+        res.send();
+    }
 });
 
 http.get('/feed/out.xml', async function (req, res) {
@@ -177,7 +203,7 @@ http.get('/feed/out.xml', async function (req, res) {
             if (resp.statusCode) {
                 res.status(resp.statusCode);
             }
-            res.setHeader('Content-Type', 'text/xml;charset=UTF-8');
+            res.set('Content-Type', 'text/xml;charset=UTF-8');
             let body = null;
             try {
                 body = proxifyUrls(fixUrls(resp.body.toString()), `${req.protocol}://${req.headers.host}`);

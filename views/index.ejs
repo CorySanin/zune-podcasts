@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Patreon to Zune | Import Patreon Podcasts to the Zune Software</title>
-    <meta name="description" content="Proxy that allows importing Patreon podcasts into the Zune desktop software" />
+    <meta name="description" content="Proxy that allows importing Patreon podcasts into the Zune desktop software." />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/assets/favicon.png" sizes="32x32">
     <link rel="stylesheet" href="/styles/reset.css">
@@ -16,17 +16,18 @@
     <div id="brandtag"></div>
     <div>
         <div id="nav">
-            <h1><a class="current" href="/">Patreon to Zune</a></h1>
+            <h1><a class="current" href="/">Patreon&nbsp;to&nbsp;Zune</a></h1>
             <% if (config.deepproxyurl) { %>
-            <a href="<%= config.deepproxyurl %>">Content Proxy</a>
+            <a href="<%= config.deepproxyurl %>">Content&nbsp;Proxy</a>
             <% } %>
-            <a href="https://github.com/CorySanin/patreon-to-zune">Fork on GitHub</a>
-            <a href="https://github.com/CorySanin/patreon-to-zune/issues/new">Report Issue</a>
+            <a href="/ring/EA7">Ring&nbsp;Generator</a>
+            <a href="https://github.com/CorySanin/patreon-to-zune">Fork&nbsp;on&nbsp;GitHub</a>
+            <a href="https://github.com/CorySanin/patreon-to-zune/issues/new">Report&nbsp;Issue</a>
         </div>
         <% if (config.deepproxyurl && nonsupported) { %>
         <span class="tooltip panel">
             <div class="brandtag-horiz"></div>Looks like you're using an old OS. If you're still getting error code
-            C00D1335, try the <a href="<%= config.deepproxyurl %>">content proxy</a>.
+            C00D1335 or C00D1337, try the <a href="<%= config.deepproxyurl %>">content proxy</a>.
         </span>
         <% } %>
     </div>
