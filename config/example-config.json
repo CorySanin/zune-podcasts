@@ -2,7 +2,7 @@
     "port": 8080,
     "blacklist": true,
     "domainlist": [
-        "tauntbot.tk",
+        "taunt.bot",
         "musickitten.net",
         "sanin.dev"
     ],

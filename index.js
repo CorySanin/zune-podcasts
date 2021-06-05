@@ -9,7 +9,8 @@ const btoa = require('btoa');
 const useragent = 'p2z';
 const cfgfile = './config/config.json';
 const LEADINGAMP = new RegExp('(https?://[^\\s]+\\?)&amp;([^<"\\s]+)', 'g');
-const MATCHURL = new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:;%_\+.~#?&//=]*)/, 'g');
+const XMLENCODEDAMP = new RegExp('&amp;', 'g');
+const MATCHURL = new RegExp(/https:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:;%_\+.~#?&//=]*)/, 'g');
 const MATCHHEX = new RegExp('^[0-9a-fA-F]{1,3}$');
 const MATCHBIN = new RegExp('^[01]{1,12}$');
 const proxy = httpProxy.createProxyServer({
@@ -98,7 +99,7 @@ function fixUrls(feed) {
  */
 function proxifyUrls(feed, host) {
     return (config.deepproxy === true) ? feed.replace(MATCHURL, match => {
-        return `${host}/proxy/file${getFilename(match).ext}?url=${encodeURIComponent(btoa(match))}`;
+        return `${host}/proxy/file${getFilename(match).ext}?url=${encodeURIComponent(btoa(match.replace(XMLENCODEDAMP, '&')))}`;
     }) : feed;
 }
 
