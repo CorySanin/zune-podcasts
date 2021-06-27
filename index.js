@@ -168,9 +168,9 @@ http.get('/ring/:id', function (req, res) {
     else if (MATCHBIN.test(req.params['id'])) {
         id = parseInt(req.params['id'], 2);
     }
-    if(id >= 0){
+    if (id >= 0) {
         let rings = [];
-        for(let i = 0; i < 12; i++){
+        for (let i = 0; i < 12; i++) {
             rings.push((id >> i) & 1);
         }
         res.set('Content-Type', 'image/svg+xml');
@@ -178,49 +178,54 @@ http.get('/ring/:id', function (req, res) {
             rings
         });
     }
-    else{
+    else {
         res.status(403);
         res.send();
     }
 });
 
 http.get('/feed/out.xml', async function (req, res) {
-    let url = req.query.in;
-    if (!/^[a-z]+:\/\//.test(url.toLowerCase())) {
-        url = 'http://' + url;
-    }
-    let domain = url.split('/');
-    domain = domain[2];
-    if (!'user-agent' in req.headers || req.headers['user-agent'] !== useragent && notBlacklisted(domain)) {
-        const resp = await phin({
-            url,
-            method: 'GET',
-            headers: {
-                'User-Agent': useragent
-            }
-        });
-
-        if (resp && 'body' in resp) {
-            if (resp.statusCode) {
-                res.status(resp.statusCode);
-            }
-            res.set('Content-Type', 'text/xml;charset=UTF-8');
-            let body = null;
-            try {
-                body = proxifyUrls(fixUrls(resp.body.toString()), `${req.protocol}://${req.headers.host}`);
-            }
-            catch (err) {
-                console.log(err);
-            }
-            res.send(body);
+    if (req.useragent.browser.toLowerCase() == 'zune') {
+        let url = req.query.in;
+        if (!/^[a-z]+:\/\//.test(url.toLowerCase())) {
+            url = 'http://' + url;
         }
+        let domain = url.split('/');
+        domain = domain[2];
+        if (!'user-agent' in req.headers || req.headers['user-agent'] !== useragent && notBlacklisted(domain)) {
+            const resp = await phin({
+                url,
+                method: 'GET',
+                headers: {
+                    'User-Agent': useragent
+                }
+            });
+
+            if (resp && 'body' in resp) {
+                if (resp.statusCode) {
+                    res.status(resp.statusCode);
+                }
+                res.set('Content-Type', 'text/xml;charset=UTF-8');
+                let body = null;
+                try {
+                    body = proxifyUrls(fixUrls(resp.body.toString()), `${req.protocol}://${req.headers.host}`);
+                }
+                catch (err) {
+                    console.log(err);
+                }
+                res.send(body);
+            }
+        }
+        else {
+            res.status(500);
+            res.send('bad url');
+        }
+        bumpLogCount();
+        logDomain(domain);
     }
     else {
-        res.status(500);
-        res.send('bad url');
+        res.send(`Copy the URL in the address bar and paste it into the Zune software.`);
     }
-    bumpLogCount();
-    logDomain(domain);
 });
 
 http.get('/proxy/:filename', function (req, res) {
