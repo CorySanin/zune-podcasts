@@ -196,6 +196,7 @@ http.get('/feed/out.xml', async function (req, res) {
             const resp = await phin({
                 url,
                 method: 'GET',
+                followRedirects: true,
                 headers: {
                     'User-Agent': useragent
                 }
