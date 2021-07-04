@@ -1,6 +1,6 @@
 {
   "name": "patreon-to-zune",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "converts Patreon podcast feeds for the Zune desktop software",
   "main": "index.js",
   "scripts": {

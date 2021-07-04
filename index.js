@@ -185,7 +185,7 @@ http.get('/ring/:id', function (req, res) {
 });
 
 http.get('/feed/out.xml', async function (req, res) {
-    if (req.useragent.browser.toLowerCase() == 'zune') {
+    if (req.useragent.browser.toLowerCase() == 'zune' || (req.query.debug && req.query.debug === 'true')) {
         let url = req.query.in;
         if (!/^[a-z]+:\/\//.test(url.toLowerCase())) {
             url = 'http://' + url;
