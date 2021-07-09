@@ -2,6 +2,7 @@ const Express = require('express');
 const phin = require('phin');
 const httpProxy = require('http-proxy');
 const exuseragent = require('express-useragent');
+const prom = require('prom-client');
 const fs = require('fs');
 const path = require('path');
 const atob = require('atob');
@@ -13,6 +14,7 @@ const XMLENCODEDAMP = new RegExp('&amp;', 'g');
 const MATCHURL = new RegExp(/https:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:;%_\+.~#?&//=]*)/, 'g');
 const MATCHHEX = new RegExp('^[0-9a-fA-F]{1,3}$');
 const MATCHBIN = new RegExp('^[01]{1,12}$');
+const METRICPREFIX = 'zunepodcast_';
 const proxy = httpProxy.createProxyServer({
     secure: false,
     changeOrigin: true,
@@ -21,11 +23,13 @@ const proxy = httpProxy.createProxyServer({
 });
 const unsupportedAgents = [
     'Windows XP',
-    'Windows Vista'
+    'Windows Vista',
+    'Windows 7'
 ];
 
 let config = {
     port: process.env.PORT || 8080,
+    privateport: process.env.PRIVATEPORT || 8081,
     blacklist: (process.env.BLACKLIST || 'true').toLowerCase() === 'true',
     domainlist: (process.env.DOMAINLIST) ? process.env.DOMAINLIST.split(',') : [],
     deepproxy: (process.env.DEEPPROXY || 'false').toLowerCase() === 'true',
@@ -147,7 +151,26 @@ function nonsupported(useragent) {
     return false;
 }
 
+let register = prom.register;
 let http = new Express();
+let privateapp = new Express();
+let metrics = {
+    feeds: new prom.Counter({
+        name: `${METRICPREFIX}feed_request_count`,
+        help: 'Number of requests to each feed',
+        labelNames: ['feed', 'domain']
+    }),
+    proxiedreq: new prom.Counter({
+        name: `${METRICPREFIX}proxied_items_count`,
+        help: 'number of items that have been proxied through the service',
+        labelNames: ['mime', 'domain']
+    }),
+    proxieddata: new prom.Counter({
+        name: `${METRICPREFIX}proxied_items_bytes`,
+        help: 'Data transferred over proxy in bytes',
+        labelNames: ['mime', 'domain']
+    }),
+}
 
 http.use(exuseragent.express());
 http.use('/', Express.static('http-root'));
@@ -191,7 +214,9 @@ http.get('/feed/out.xml', async function (req, res) {
             url = 'http://' + url;
         }
         let domain = url.split('/');
+        let feed = url.split('?', 2);
         domain = domain[2];
+        feed = feed[0];
         if (!'user-agent' in req.headers || req.headers['user-agent'] !== useragent && notBlacklisted(domain)) {
             const resp = await phin({
                 url,
@@ -216,6 +241,8 @@ http.get('/feed/out.xml', async function (req, res) {
                 }
                 res.send(body);
             }
+
+            metrics.feeds.inc({ feed, domain });
         }
         else {
             res.status(500);
@@ -229,13 +256,18 @@ http.get('/feed/out.xml', async function (req, res) {
     }
 });
 
-http.get('/proxy/:filename', function (req, res) {
+http.get('/proxy/:filename', async function (req, res) {
     try {
         const proxurl = atob(req.query['url']);
         if (config.deepproxy === true && notBlacklisted(proxurl)) {
             console.log(`Proxy to ${proxurl}`);
             proxy.web(req, res, {
                 target: proxurl
+            }, function (ex) {
+                if (ex) {
+                    res.status(403);
+                    res.send();
+                }
             });
         }
         else {
@@ -253,6 +285,24 @@ http.get('/out.xml', function (req, res) {
     res.redirect('/feed/out.xml?in=' + req.query.in);
 });
 
+privateapp.get('/metrics', async (req, res) => {
+    try {
+        res.set('Content-Type', register.contentType);
+        res.end(await register.metrics());
+    }
+    catch (ex) {
+        res.status(500).send(ex);
+    }
+});
+
+prom.collectDefaultMetrics({
+    prefix: METRICPREFIX
+});
+
+proxy.on('proxyRes', (res) => {
+    metrics.proxiedreq.inc({ mime: res.headers['content-type'], domain: res.client.servername });
+    metrics.proxieddata.inc({ mime: res.headers['content-type'], domain: res.client.servername }, parseInt(res.headers['content-length']));
+});
 
 fs.readFile(cfgfile, 'utf8', function (err, data) {
     if (!err) {
@@ -270,4 +320,5 @@ fs.readFile(cfgfile, 'utf8', function (err, data) {
         console.log('No config file found. Loading default configuration.');
     }
     http.listen(config.port, () => console.log(`patreon-to-zune listening on port ${config.port}!`));
-})
+    privateapp.listen(config.privateport, () => { });
+});

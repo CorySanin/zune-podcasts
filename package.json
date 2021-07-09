@@ -19,6 +19,7 @@
     "express": "4.17.1",
     "express-useragent": "1.0.15",
     "http-proxy": "1.18.1",
-    "phin": "3.6.0"
+    "phin": "3.6.0",
+    "prom-client": "13.1.0"
   }
 }
