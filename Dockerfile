@@ -1,6 +1,6 @@
-FROM node:alpine3.12
+FROM node:lts-alpine3.15 AS install
 
-WORKDIR /usr/src/p-to-z
+WORKDIR /usr/src/app
 
 COPY package*.json ./
 
@@ -9,4 +9,14 @@ RUN npm ci --only=production
 
 COPY . .
 
+FROM node:lts-alpine3.15
+
+WORKDIR /usr/src/app
+
+COPY --from=install /usr/src/app /usr/src/app/
+
+USER node
+
 CMD [ "npm", "start" ]
+
+EXPOSE 8080

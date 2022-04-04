@@ -1,7 +1,7 @@
 {
-  "name": "patreon-to-zune",
-  "version": "1.5.3",
-  "description": "converts Patreon podcast feeds for the Zune desktop software",
+  "name": "zune-podcasts",
+  "version": "1.5.4",
+  "description": "corrects problematic podcast feeds for the Zune desktop software",
   "main": "index.js",
   "scripts": {
     "start": "node --use_strict index.js"
@@ -11,15 +11,15 @@
     "email": "corysanin@outlook.com"
   },
   "license": "MIT",
-  "repository": "https://github.com/CorySanin/patreon-to-zune",
+  "repository": "https://github.com/CorySanin/zune-podcasts",
   "dependencies": {
     "atob": "2.1.2",
     "btoa": "1.2.1",
     "ejs": "3.1.6",
-    "express": "4.17.1",
+    "express": "4.17.3",
     "express-useragent": "1.0.15",
     "http-proxy": "1.18.1",
-    "phin": "3.6.0",
-    "prom-client": "13.1.0"
+    "phin": "3.6.1",
+    "prom-client": "14.0.1"
   }
 }

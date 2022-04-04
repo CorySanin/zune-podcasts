@@ -319,6 +319,6 @@ fs.readFile(cfgfile, 'utf8', function (err, data) {
     else {
         console.log('No config file found. Loading default configuration.');
     }
-    http.listen(config.port, () => console.log(`patreon-to-zune listening on port ${config.port}!`));
+    http.listen(config.port, () => console.log(`zune-podcasts listening on port ${config.port}!`));
     privateapp.listen(config.privateport, () => { });
 });
