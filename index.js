@@ -4,14 +4,19 @@ const httpProxy = require('http-proxy');
 const exuseragent = require('express-useragent');
 const prom = require('prom-client');
 const fs = require('fs');
+const fsp = fs.promises;
 const path = require('path');
 const atob = require('atob');
 const btoa = require('btoa');
+const sharp = require('sharp');
 const useragent = 'p2z';
 const cfgfile = './config/config.json';
 const LEADINGAMP = new RegExp('(https?://[^\\s]+\\?)&amp;([^<"\\s]+)', 'g');
 const XMLENCODEDAMP = new RegExp('&amp;', 'g');
 const MATCHURL = new RegExp(/https:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:;%_\+.~#?&//=]*)/, 'g');
+const MATCHIMAGE = new RegExp(/<image[^>]*>[\s\S]*<\/image/);
+const MATCHIMAGETAG = /<url[^>]*>([^<]+)<\/url/;
+const MATCHPROXY = new RegExp(/\/proxy\//);
 const MATCHHEX = new RegExp('^[0-9a-fA-F]{1,3}$');
 const MATCHBIN = new RegExp('^[01]{1,12}$');
 const METRICPREFIX = 'zunepodcast_';
@@ -55,13 +60,13 @@ function notBlacklisted(domain) {
 /**
  * Increment the number of requests in the appropriate log
  */
-function bumpLogCount() {
+async function bumpLogCount() {
     if (config.logrequestnum) {
         let today = new Date();
         logPath = path.join(config.logdir, 'p2z_' + today.getFullYear() + '.json');
         let data = {};
         try {
-            data = JSON.parse(fs.readFileSync(logPath, { encoding: 'utf8' }));
+            data = JSON.parse(await fsp.readFile(logPath, { encoding: 'utf8' }));
         }
         catch (ex) {
             console.log(ex);
@@ -71,7 +76,7 @@ function bumpLogCount() {
             data[month] = {};
         }
         data[month].requests = ('requests' in data[month]) ? data[month].requests + 1 : 1;
-        fs.writeFileSync(logPath, JSON.stringify(data), { encoding: 'utf8' });
+        await fsp.writeFile(logPath, JSON.stringify(data), { encoding: 'utf8' });
     }
 }
 
@@ -102,8 +107,11 @@ function fixUrls(feed) {
  * @param {string} feed 
  */
 function proxifyUrls(feed, host) {
-    return (config.deepproxy === true) ? feed.replace(MATCHURL, match => {
-        return `${host}/proxy/file${getFilename(match).ext}?url=${encodeURIComponent(btoa(match.replace(XMLENCODEDAMP, '&')))}`;
+    return (config.deepproxy === true) ? feed.replace(MATCHURL, url => {
+        return `${host}/proxy/file${getFilename(url).ext}?url=${encodeURIComponent(btoa(url.replace(XMLENCODEDAMP, '&')))}`;
+    }).replace(MATCHIMAGE, img => {
+        let link = img.match(MATCHIMAGETAG);
+        return img.replace(link[1], link[1].replace(MATCHPROXY, '/watermark/'));
     }) : feed;
 }
 
@@ -111,13 +119,13 @@ function proxifyUrls(feed, host) {
  * Add a new domain to the log of domains being proxied to
  * @param {string} domain 
  */
-function logDomain(domain) {
+async function logDomain(domain) {
     if (config.logrequestdomains) {
         let today = new Date();
         logPath = path.join(config.logdir, 'p2z_' + today.getFullYear() + '.json');
         let data = {};
         try {
-            data = JSON.parse(fs.readFileSync(logPath, { encoding: 'utf8' }));
+            data = JSON.parse(await fsp.readFile(logPath, { encoding: 'utf8' }));
         }
         catch (ex) {
             console.log(ex);
@@ -133,7 +141,7 @@ function logDomain(domain) {
         if (domains.indexOf(domain) < 0) {
             domains.push(domain);
             data[month].domains = domains;
-            fs.writeFileSync(logPath, JSON.stringify(data), { encoding: 'utf8' });
+            await fsp.writeFile(logPath, JSON.stringify(data), { encoding: 'utf8' });
         }
     }
 }
@@ -248,8 +256,8 @@ http.get('/feed/out.xml', async function (req, res) {
             res.status(500);
             res.send('bad url');
         }
-        bumpLogCount();
-        logDomain(domain);
+        await bumpLogCount();
+        await logDomain(domain);
     }
     else {
         res.send(`Copy the URL in the address bar and paste it into the Zune software.`);
@@ -260,7 +268,7 @@ http.get('/proxy/:filename', async function (req, res) {
     try {
         const proxurl = atob(req.query['url']);
         if (config.deepproxy === true && notBlacklisted(proxurl)) {
-            console.log(`Proxy to ${proxurl}`);
+            console.log(`Proxying ${proxurl}`);
             proxy.web(req, res, {
                 target: proxurl
             }, function (ex) {
@@ -269,6 +277,48 @@ http.get('/proxy/:filename', async function (req, res) {
                     res.send();
                 }
             });
+        }
+        else {
+            res.status(403);
+            res.send();
+        }
+    }
+    catch (err) {
+        res.status(403);
+        res.send();
+    }
+});
+
+http.get('/watermark/:filename', async function (req, res) {
+    try {
+        const proxurl = atob(req.query['url']);
+        if (config.deepproxy === true && notBlacklisted(proxurl)) {
+            console.log(`Proxying image ${proxurl}`);
+            const host = (new URL(proxurl)).host;
+            const watermark = sharp('http-root/assets/favicon.svg');
+            const resp = await phin({
+                url: proxurl,
+                method: 'GET',
+                followRedirects: true,
+                headers: {
+                    'User-Agent': useragent
+                }
+            });
+            if (resp && 'body' in resp) {
+                metrics.proxiedreq.inc({ mime: resp.headers['content-type'], domain: host });
+                metrics.proxieddata.inc({ mime: resp.headers['content-type'], domain: host }, parseInt(resp.headers['content-length']));
+                const s = sharp(resp.body);
+                const meta = await s.metadata();
+                const watermarkSize = Math.floor(meta.width / 8);
+                const padding = Math.floor(meta.width / 30);
+                const distance = watermarkSize + padding;
+                res.send(await s.composite([{
+                    input: await watermark.resize(watermarkSize).toBuffer(),
+                    left: meta.width - distance,
+                    top: meta.height - distance
+                }]).toBuffer());
+            }
+            res.end();
         }
         else {
             res.status(403);
