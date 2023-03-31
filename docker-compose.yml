@@ -1,0 +1,12 @@
+version: '2'
+
+services:
+   zune-podcasts:
+      container_name: zune-podcasts
+      build:
+         context: ./
+         dockerfile: ./Dockerfile
+      ports:
+         - 8080:8080
+      volumes:
+         - ./config:/usr/src/app/config
