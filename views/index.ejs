@@ -23,6 +23,9 @@
             <a href="/ring/EA7">Ring&nbsp;Generator</a>
             <a href="https://github.com/CorySanin/zune-podcasts">Fork&nbsp;on&nbsp;GitHub</a>
             <a href="https://github.com/CorySanin/zune-podcasts/issues/new">Report&nbsp;Issue</a>
+            <% if (config.donate) { %>
+            <a href="<%= config.donate %>">Donate</a>
+            <% } %>
         </div>
         <% if (config.deepproxyurl && nonsupported) { %>
         <span class="tooltip panel">

@@ -10,5 +10,6 @@
     "deepproxyurl": false,
     "logrequestnum": false,
     "logrequestdomains": false,
-    "logdir": "./"
+    "logdir": "./",
+    "donate": "https://ko-fi.com/sanin"
 }

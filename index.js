@@ -41,7 +41,8 @@ let config = {
     deepproxyurl: process.env.DEEPPROXYURL || false,
     logrequestnum: (process.env.LOGREQUESTNUM || 'false').toLowerCase() === 'true',
     logrequestdomains: (process.env.LOGREQUESTDOMAINS || 'false').toLowerCase() === 'true',
-    logdir: './'
+    logdir: './',
+    donate: process.env.DONATE || null
 }
 
 /**
@@ -148,7 +149,7 @@ async function logDomain(domain) {
 
 /**
  * Given a user agent string, return true if the OS is detected to be EOL
- * @param {string} useragent 
+ * @param {string} useragent
  */
 function nonsupported(useragent) {
     for (var i = 0; i < unsupportedAgents.length; i++) {
