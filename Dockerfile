@@ -1,4 +1,4 @@
-FROM node:lts-alpine3.17 AS install
+FROM node:lts-alpine3.18 AS install
 
 WORKDIR /usr/src/app
 
@@ -9,7 +9,7 @@ RUN npm ci --only=production
 
 COPY . .
 
-FROM node:lts-alpine3.17
+FROM node:lts-alpine3.18
 
 WORKDIR /usr/src/app
 
