@@ -1,6 +1,5 @@
 const Express = require('express');
 const phin = require('phin');
-const httpProxy = require('http-proxy');
 const exuseragent = require('express-useragent');
 const prom = require('prom-client');
 const fs = require('fs');
@@ -20,12 +19,6 @@ const MATCHPROXY = new RegExp(/\/proxy\//);
 const MATCHHEX = new RegExp('^[0-9a-fA-F]{1,3}$');
 const MATCHBIN = new RegExp('^[01]{1,12}$');
 const METRICPREFIX = 'zunepodcast_';
-const proxy = httpProxy.createProxyServer({
-    secure: false,
-    changeOrigin: true,
-    ignorePath: true,
-    followRedirects: true
-});
 const unsupportedAgents = [
     'Windows XP',
     'Windows Vista',
@@ -270,14 +263,26 @@ http.get('/proxy/:filename', async function (req, res) {
         const proxurl = atob(req.query['url']);
         if (config.deepproxy === true && notBlacklisted(proxurl)) {
             console.log(`Proxying ${proxurl}`);
-            proxy.web(req, res, {
-                target: proxurl
-            }, function (ex) {
-                if (ex) {
-                    res.status(403);
-                    res.send();
-                }
+            const host = (new URL(proxurl)).host;
+            const resp = await phin({
+                url: proxurl,
+                method: 'GET',
+                followRedirects: true,
+                headers: {
+                    'User-Agent': useragent
+                },
+                stream: true
             });
+            if (resp) {
+                metrics.proxiedreq.inc({ mime: resp.headers['content-type'], domain: host });
+                metrics.proxieddata.inc({ mime: resp.headers['content-type'], domain: host }, parseInt(resp.headers['content-length']));
+                res.writeHead(resp.statusCode, resp.headers);
+                resp.pipe(res);
+            }
+            else{
+                res.status(403);
+                res.send();
+            }
         }
         else {
             res.status(403);
@@ -285,6 +290,7 @@ http.get('/proxy/:filename', async function (req, res) {
         }
     }
     catch (err) {
+        console.error(err);
         res.status(403);
         res.send();
     }
@@ -327,6 +333,7 @@ http.get('/watermark/:filename', async function (req, res) {
         }
     }
     catch (err) {
+        console.error(err);
         res.status(403);
         res.send();
     }
@@ -348,11 +355,6 @@ privateapp.get('/metrics', async (req, res) => {
 
 prom.collectDefaultMetrics({
     prefix: METRICPREFIX
-});
-
-proxy.on('proxyRes', (res) => {
-    metrics.proxiedreq.inc({ mime: res.headers['content-type'], domain: res.client.servername });
-    metrics.proxieddata.inc({ mime: res.headers['content-type'], domain: res.client.servername }, parseInt(res.headers['content-length']));
 });
 
 fs.readFile(cfgfile, 'utf8', function (err, data) {
