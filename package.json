@@ -1,6 +1,6 @@
 {
   "name": "zune-podcasts",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "description": "corrects problematic podcast feeds for the Zune desktop software",
   "main": "index.js",
   "scripts": {
@@ -20,6 +20,6 @@
     "express-useragent": "1.0.15",
     "phin": "3.7.0",
     "prom-client": "14.2.0",
-    "sharp": "0.32.4"
+    "sharp": "0.32.5"
   }
 }

@@ -38,6 +38,18 @@ let config = {
     donate: process.env.DONATE || null
 }
 
+let servers = [];
+
+/**
+ * Close all servers
+ */
+function shutdown() {
+    console.log('\nShutting down...');
+    servers.forEach(serv => {
+        serv.close();
+    });
+}
+
 /**
  * Check if domain is on the blacklist
  * @param {string} domain 
@@ -343,6 +355,10 @@ http.get('/out.xml', function (req, res) {
     res.redirect('/feed/out.xml?in=' + req.query.in);
 });
 
+privateapp.get('/healthcheck', (req, res) => {
+    res.send('Healthy');
+});
+
 privateapp.get('/metrics', async (req, res) => {
     try {
         res.set('Content-Type', register.contentType);
@@ -372,6 +388,11 @@ fs.readFile(cfgfile, 'utf8', function (err, data) {
     else {
         console.log('No config file found. Loading default configuration.');
     }
-    http.listen(config.port, () => console.log(`zune-podcasts listening on port ${config.port}!`));
-    privateapp.listen(config.privateport, () => { });
+    servers.push(
+        http.listen(config.port, () => console.log(`zune-podcasts listening on port ${config.port}!`)),
+        privateapp.listen(config.privateport, () => { })
+    );
 });
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
