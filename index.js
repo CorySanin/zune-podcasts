@@ -224,46 +224,52 @@ http.get('/ring/:id', function (req, res) {
 http.get('/feed/out.xml', async function (req, res) {
     if (req.useragent.browser.toLowerCase() == 'zune' || (req.query.debug && req.query.debug === 'true')) {
         let url = req.query.in;
-        if (!/^[a-z]+:\/\//.test(url.toLowerCase())) {
-            url = 'http://' + url;
-        }
-        let domain = url.split('/');
-        let feed = url.split('?', 2);
-        domain = domain[2];
-        feed = feed[0];
-        if (!'user-agent' in req.headers || req.headers['user-agent'] !== useragent && notBlacklisted(domain)) {
-            const resp = await phin({
-                url,
-                method: 'GET',
-                followRedirects: true,
-                headers: {
-                    'User-Agent': useragent
-                }
-            });
-
-            if (resp && 'body' in resp) {
-                if (resp.statusCode) {
-                    res.status(resp.statusCode);
-                }
-                res.set('Content-Type', 'text/xml;charset=UTF-8');
-                let body = null;
-                try {
-                    body = proxifyUrls(fixUrls(resp.body.toString()), `${req.protocol}://${req.headers.host}`);
-                }
-                catch (err) {
-                    console.log(err);
-                }
-                res.send(body);
+        if (url) {
+            if (!/^[a-z]+:\/\//.test(url.toLowerCase())) {
+                url = 'http://' + url;
             }
+            let domain = url.split('/');
+            let feed = url.split('?', 2);
+            domain = domain[2];
+            feed = feed[0];
+            if (!'user-agent' in req.headers || req.headers['user-agent'] !== useragent && notBlacklisted(domain)) {
+                const resp = await phin({
+                    url,
+                    method: 'GET',
+                    followRedirects: true,
+                    headers: {
+                        'User-Agent': useragent
+                    }
+                });
 
-            metrics.feeds.inc({ feed, domain });
+                if (resp && 'body' in resp) {
+                    if (resp.statusCode) {
+                        res.status(resp.statusCode);
+                    }
+                    res.set('Content-Type', 'text/xml;charset=UTF-8');
+                    let body = null;
+                    try {
+                        body = proxifyUrls(fixUrls(resp.body.toString()), `${req.protocol}://${req.headers.host}`);
+                    }
+                    catch (err) {
+                        console.log(err);
+                    }
+                    res.send(body);
+                }
+
+                metrics.feeds.inc({ feed, domain });
+            }
+            else {
+                res.status(400);
+                res.send('bad url');
+            }
+            await bumpLogCount();
+            await logDomain(domain);
         }
         else {
-            res.status(500);
+            res.status(400);
             res.send('bad url');
         }
-        await bumpLogCount();
-        await logDomain(domain);
     }
     else {
         res.send(`Copy the URL in the address bar and paste it into the Zune software.`);
@@ -272,76 +278,84 @@ http.get('/feed/out.xml', async function (req, res) {
 
 http.get('/proxy/:filename', async function (req, res) {
     try {
-        const proxurl = atob(req.query['url']);
-        if (config.deepproxy === true && notBlacklisted(proxurl)) {
-            console.log(`Proxying ${proxurl}`);
-            const host = (new URL(proxurl)).host;
-            const resp = await phin({
-                url: proxurl,
-                method: 'GET',
-                followRedirects: true,
-                headers: {
-                    'User-Agent': useragent
-                },
-                stream: true
-            });
-            if (resp) {
-                metrics.proxiedreq.inc({ mime: resp.headers['content-type'], domain: host });
-                metrics.proxieddata.inc({ mime: resp.headers['content-type'], domain: host }, parseInt(resp.headers['content-length']));
-                res.writeHead(resp.statusCode, resp.headers);
-                resp.pipe(res);
+        const url = req.query['url'];
+        const proxurl = atob(url);
+        if (url && proxurl) {
+            if (config.deepproxy === true && notBlacklisted(proxurl)) {
+                console.log(`Proxying ${proxurl}`);
+                const host = (new URL(proxurl)).host;
+                const resp = await phin({
+                    url: proxurl,
+                    method: 'GET',
+                    followRedirects: true,
+                    headers: {
+                        'User-Agent': useragent
+                    },
+                    stream: true
+                });
+                if (resp) {
+                    metrics.proxiedreq.inc({ mime: resp.headers['content-type'], domain: host });
+                    metrics.proxieddata.inc({ mime: resp.headers['content-type'], domain: host }, parseInt(resp.headers['content-length']));
+                    res.writeHead(resp.statusCode, resp.headers);
+                    resp.pipe(res);
+                }
+                else {
+                    res.status(500).send();
+                }
             }
-            else{
-                res.status(403);
-                res.send();
+            else {
+                res.status(403).send();
             }
         }
         else {
-            res.status(403);
-            res.send();
+            res.status(400).send();
         }
     }
     catch (err) {
         console.error(err);
-        res.status(403);
-        res.send();
+        res.status(403).send();
     }
 });
 
 http.get('/watermark/:filename', async function (req, res) {
     try {
-        const proxurl = atob(req.query['url']);
-        if (config.deepproxy === true && notBlacklisted(proxurl)) {
-            console.log(`Proxying image ${proxurl}`);
-            const host = (new URL(proxurl)).host;
-            const watermark = sharp('http-root/assets/favicon.svg');
-            const resp = await phin({
-                url: proxurl,
-                method: 'GET',
-                followRedirects: true,
-                headers: {
-                    'User-Agent': useragent
+        const url = req.query['url'];
+        const proxurl = atob(url);
+        if (url && proxurl) {
+            if (config.deepproxy === true && notBlacklisted(proxurl)) {
+                console.log(`Proxying image ${proxurl}`);
+                const host = (new URL(proxurl)).host;
+                const watermark = sharp('http-root/assets/favicon.svg');
+                const resp = await phin({
+                    url: proxurl,
+                    method: 'GET',
+                    followRedirects: true,
+                    headers: {
+                        'User-Agent': useragent
+                    }
+                });
+                if (resp && 'body' in resp) {
+                    metrics.proxiedreq.inc({ mime: resp.headers['content-type'], domain: host });
+                    metrics.proxieddata.inc({ mime: resp.headers['content-type'], domain: host }, parseInt(resp.headers['content-length']));
+                    const s = sharp(resp.body);
+                    const meta = await s.metadata();
+                    const watermarkSize = Math.floor(meta.width / 8);
+                    const padding = Math.floor(meta.width / 30);
+                    const distance = watermarkSize + padding;
+                    res.send(await s.composite([{
+                        input: await watermark.resize(watermarkSize).toBuffer(),
+                        left: meta.width - distance,
+                        top: meta.height - distance
+                    }]).toBuffer());
                 }
-            });
-            if (resp && 'body' in resp) {
-                metrics.proxiedreq.inc({ mime: resp.headers['content-type'], domain: host });
-                metrics.proxieddata.inc({ mime: resp.headers['content-type'], domain: host }, parseInt(resp.headers['content-length']));
-                const s = sharp(resp.body);
-                const meta = await s.metadata();
-                const watermarkSize = Math.floor(meta.width / 8);
-                const padding = Math.floor(meta.width / 30);
-                const distance = watermarkSize + padding;
-                res.send(await s.composite([{
-                    input: await watermark.resize(watermarkSize).toBuffer(),
-                    left: meta.width - distance,
-                    top: meta.height - distance
-                }]).toBuffer());
+                res.end();
             }
-            res.end();
+            else {
+                res.status(403).send();
+            }
         }
         else {
-            res.status(403);
-            res.send();
+            res.status(400).send();
         }
     }
     catch (err) {
@@ -352,7 +366,7 @@ http.get('/watermark/:filename', async function (req, res) {
 });
 
 http.get('/out.xml', function (req, res) {
-    res.redirect('/feed/out.xml?in=' + req.query.in);
+    res.redirect('/feed/out.xml?in=' + (req.query.in || ''));
 });
 
 privateapp.get('/healthcheck', (req, res) => {
