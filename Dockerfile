@@ -1,4 +1,6 @@
-FROM node:lts-alpine3.19 AS install
+FROM node:lts-alpine3.20 AS baseimg
+
+FROM baseimg AS install
 
 WORKDIR /usr/src/app
 
@@ -12,7 +14,7 @@ RUN npm ci --only=production || (\
 
 COPY . .
 
-FROM node:lts-alpine3.19 AS deploy
+FROM baseimg AS deploy
 
 HEALTHCHECK  --timeout=3s \
   CMD curl --fail http://localhost:8081/healthcheck || exit 1

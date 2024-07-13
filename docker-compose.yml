@@ -6,6 +6,7 @@ services:
       build:
          context: ./
          dockerfile: ./Dockerfile
+      # image: corysanin/zune-podcasts
       ports:
          - 8080:8080
       volumes:
