@@ -16,7 +16,7 @@
     "atob": "2.1.2",
     "btoa": "1.2.1",
     "ejs": "3.1.10",
-    "express": "4.21.1",
+    "express": "4.21.2",
     "express-useragent": "1.0.15",
     "phin": "3.7.1",
     "prom-client": "15.1.3",
