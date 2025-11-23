@@ -1,6 +1,6 @@
 {
   "name": "zune-podcasts",
-  "version": "1.7.8",
+  "version": "1.7.9",
   "description": "corrects problematic podcast feeds for the Zune desktop software",
   "main": "index.js",
   "scripts": {

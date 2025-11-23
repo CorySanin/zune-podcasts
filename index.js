@@ -22,7 +22,10 @@ const METRICPREFIX = 'zunepodcast_';
 const unsupportedAgents = [
     'Windows XP',
     'Windows Vista',
-    'Windows 7'
+    'Windows 7',
+    'Windows 8',
+    'Windows 8.1',
+    'Windows 10'
 ];
 
 let config = {
@@ -233,28 +236,34 @@ http.get('/feed/out.xml', async function (req, res) {
             domain = domain[2];
             feed = feed[0];
             if (!'user-agent' in req.headers || req.headers['user-agent'] !== useragent && notBlacklisted(domain)) {
-                const resp = await phin({
-                    url,
-                    method: 'GET',
-                    followRedirects: true,
-                    headers: {
-                        'User-Agent': useragent
+                try {
+                    const resp = await phin({
+                        url,
+                        method: 'GET',
+                        followRedirects: true,
+                        headers: {
+                            'User-Agent': useragent
+                        }
+                    });
+                    if (resp && 'body' in resp) {
+                        if (resp.statusCode) {
+                            res.status(resp.statusCode);
+                        }
+                        res.set('Content-Type', 'text/xml;charset=UTF-8');
+                        let body = null;
+                        try {
+                            body = proxifyUrls(fixUrls(resp.body.toString()), `${req.protocol}://${req.host}`);
+                        }
+                        catch (err) {
+                            console.log(err);
+                        }
+                        res.send(body);
                     }
-                });
-
-                if (resp && 'body' in resp) {
-                    if (resp.statusCode) {
-                        res.status(resp.statusCode);
-                    }
-                    res.set('Content-Type', 'text/xml;charset=UTF-8');
-                    let body = null;
-                    try {
-                        body = proxifyUrls(fixUrls(resp.body.toString()), `${req.protocol}://${req.headers.host}`);
-                    }
-                    catch (err) {
-                        console.log(err);
-                    }
-                    res.send(body);
+                }
+                catch (ex) {
+                    res.status(500).send('failed to get feed from host.');
+                    console.error(ex);
+                    return;
                 }
 
                 metrics.feeds.inc({ feed, domain });
