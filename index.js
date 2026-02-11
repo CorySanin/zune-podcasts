@@ -10,6 +10,7 @@ const btoa = require('btoa');
 const sharp = require('sharp');
 const useragent = 'p2z';
 const cfgfile = './config/config.json';
+const MAXSUMMARYLEN = 4000;
 const LEADINGAMP = new RegExp('(https?://[^\\s]+\\?)&amp;([^<"\\s]+)', 'g');
 const XMLENCODEDAMP = new RegExp('&amp;', 'g');
 const MATCHURL = new RegExp(/https:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:;%_\+.~#?&//=]*)/, 'g');
@@ -109,6 +110,23 @@ function getFilename(url) {
  */
 function fixUrls(feed) {
     return feed.replace(LEADINGAMP, '$1$2');
+}
+
+/**
+ * Replace long summaries with a shorter canned one
+ * @param {string} feed 
+ */
+function removeLongSummaries(feed) {
+    const isummaryfinder = /(<itunes:summary[^>]*>)([\s\S]*?)(<\/itunes:summary)/g;
+    let match;
+    let newfeed = feed;
+    while ((match = isummaryfinder.exec(feed)) !== null) {
+        const summary = match[2];
+        if (summary.length > MAXSUMMARYLEN) {
+            newfeed = newfeed.replace(match[0], `${match[1]}Summary removed; too long. Truncated summaries coming in a future Zune Podcasts release.${match[3]}`);
+        }
+    }
+    return newfeed;
 }
 
 /**
@@ -252,7 +270,7 @@ http.get('/feed/out.xml', async function (req, res) {
                         res.set('Content-Type', 'text/xml;charset=UTF-8');
                         let body = null;
                         try {
-                            body = proxifyUrls(fixUrls(resp.body.toString()), `${req.protocol}://${req.host}`);
+                            body = removeLongSummaries(proxifyUrls(fixUrls(resp.body.toString()), `${req.protocol}://${req.host}`));
                         }
                         catch (err) {
                             console.log(err);
